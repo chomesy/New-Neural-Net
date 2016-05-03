@@ -16,6 +16,7 @@ namespace New_Neural_Net
         private TrainingGenerator trainData = new TrainingGenerator();
         private Population myPop;
         private int numiterations;
+        private List<int> topology = new List<int>(4){ 2, 8,4, 1 };
 
         public PrimaryWindow()
         {
@@ -27,6 +28,11 @@ namespace New_Neural_Net
             bw.DoWork += new DoWorkEventHandler(bw_DoWork);
             bw.ProgressChanged += new ProgressChangedEventHandler(bw_ProgressChanged);
             bw.RunWorkerCompleted += new RunWorkerCompletedEventHandler(bw_RunWorkerCompleted);
+            //List<int> topology = new List<int>();
+            //this.topology.Add(trainData.td_inputs.Count);
+            //this.topology.Add(4);
+            //topology.Add(3);
+            //this.topology.Add(trainData.td_outputs.Count);
         }
 
         private void outputTextBox_TextChanged(object sender, EventArgs e)
@@ -38,12 +44,8 @@ namespace New_Neural_Net
         {
             outputTextBox.Clear();
             //hard code network topology
-            List<int> topology = new List<int>();
-            topology.Add(trainData.td_inputs.Count);
-            topology.Add(4);
-            //topology.Add(3);
-            topology.Add(trainData.td_outputs.Count);
-            myPop = new Population(10, topology);
+           
+            myPop = new Population(50, this.topology);
 
         }
 
@@ -166,6 +168,7 @@ namespace New_Neural_Net
         private void cullButton_Click(object sender, EventArgs e)
         {
             myPop.cullGeneration(.5);
+            myPop.addNets(25, topology);
         }
     }
 

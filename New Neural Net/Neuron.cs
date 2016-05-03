@@ -158,7 +158,7 @@ namespace New_Neural_Net
         public double m_outputVal { get; set; }
         public List<Connection> m_outputWeights { get; set; }
 
-        private static double eta = 0.00005;   // [0.0..1.0] overall net training rate
+        private static double eta = 0.000005;   // [0.0..1.0] overall net training rate
         private static double alpha = .5;// [0.0..n] multiplier of last weight change (momentum)
         private int m_myIndex;
         private double m_gradient;

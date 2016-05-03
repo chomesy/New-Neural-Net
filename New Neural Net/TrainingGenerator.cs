@@ -56,7 +56,7 @@ namespace New_Neural_Net
         }
 
         private const int _inputmin = 0;
-        private const int _inputmax = 100;
+        private const int _inputmax = 10;
 	    public List<double> td_inputs { get; }
         public List<double> td_outputs { get; }
         private double td_algorithm(double n1, double n2)

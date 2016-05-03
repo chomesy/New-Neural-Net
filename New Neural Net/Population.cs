@@ -35,6 +35,15 @@ namespace New_Neural_Net
             return output;
         }
         public Net getNet(int index) { return thePopulation[index]; }
+        public void addNets(int popSize, List<int> topology)
+        {
+            Random rnd = new Random();
+            for (int i = 0; i < popSize; ++i)
+            {
+                Net newNet = new Net(topology, rnd);
+                thePopulation.Add(newNet);
+            }
+        }
         public Net getFittest() { return thePopulation[fittestIndex]; }
         public void sortPopulation()
         {
