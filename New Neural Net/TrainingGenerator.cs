@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using System.Windows.Forms;
 
 namespace New_Neural_Net
 {
@@ -11,8 +11,9 @@ namespace New_Neural_Net
     {
         public TrainingGenerator()
         {
-            td_inputs = new List<double>() { 0, 0 };
-            td_outputs = new List<double>() { 0 };
+            td_inputs = new List<double>();
+            td_outputs = new List<double>();
+            this.makeNewTraining();
         }
         public void makeNewTraining()
         {
@@ -21,15 +22,37 @@ namespace New_Neural_Net
             Random rnd = new Random();
             
             // create inputs and se binary input vectors
-            int n1 = rnd.Next(_inputmin, _inputmax);
+            double n1 = rnd.Next(_inputmin, _inputmax);
 
-            int n2 = rnd.Next(_inputmin, _inputmax);
-
+            double n2 = rnd.Next(_inputmin, _inputmax);
             double t = td_algorithm(n1, n2);
-
+            /* Noralized version
             td_inputs.Add((n1 - _inputmin) / (_inputmax - _inputmin));
             td_inputs.Add((n2 - _inputmin) / (_inputmax - _inputmin));
             td_outputs.Add((t - _inputmin) / (_inputmax - _inputmin));
+            */
+
+            //Non-noralized version
+            td_inputs.Add(n1);
+            td_inputs.Add(n2);
+            td_outputs.Add(t);
+
+        }
+        public override string ToString()
+        {
+            string output = "Inputs: ";
+            foreach (double element in td_inputs)
+            {
+                output += element.ToString() + " ";
+            }
+
+            output += "Outputs: ";
+
+            foreach (double element in td_outputs)
+            {
+                output += element.ToString() + " ";
+            }
+            return output;
         }
 
         private const int _inputmin = 0;

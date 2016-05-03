@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 
 namespace New_Neural_Net
 {
+    using System.Windows.Forms;
     using Layer = List<Neuron>;
 
     class Connection
@@ -17,6 +18,18 @@ namespace New_Neural_Net
     class Neuron
     {
         public Neuron(int numOutputs, int myIndex)
+        {
+            m_outputWeights = new List<Connection>();
+            for (int c = 0; c < numOutputs; ++c)
+            {
+                Random rnd = new Random(c);
+                m_outputWeights.Add(new Connection());
+                m_outputWeights.Last().weight = rnd.NextDouble();
+            }
+
+            m_myIndex = myIndex;
+        }
+        public Neuron(int numOutputs, int myIndex, Random rnd)
         {
             m_outputWeights = new List<Connection>();
             for (int c = 0; c < numOutputs; ++c)
@@ -37,6 +50,7 @@ namespace New_Neural_Net
             }
             for (int c = outputweights.Count(); c < numOutputs; ++c)
             {
+                Random rnd = new Random(c);
                 m_outputWeights.Add(new Connection());
                 m_outputWeights.Last().weight = rnd.NextDouble();
             }
@@ -53,8 +67,18 @@ namespace New_Neural_Net
 
             for (int n = 0; n < prevLayer.Count; ++n)
             {
-                sum += prevLayer[n].m_outputVal *
-                    prevLayer[n].m_outputWeights[m_myIndex].weight;
+                try
+                {               
+                        sum += prevLayer[n].m_outputVal *
+                            prevLayer[n].m_outputWeights[m_myIndex].weight;
+                    if (double.IsNaN(sum) || double.IsInfinity(sum)) throw new System.NotFiniteNumberException();
+                    
+                }
+                catch
+                {
+                    MessageBox.Show("Overflow calculating neuron output value"); throw;
+                }
+               
             }
 
             m_outputVal = transferFunction(sum);
@@ -62,7 +86,7 @@ namespace New_Neural_Net
 
         public void calcOutputGradients(double targetVal)
         {
-            double delta = targetVal - m_outputVal;
+            double delta = m_outputVal - targetVal;
             m_gradient = delta * transferFunctionDerivative(m_outputVal);
         }
 
@@ -81,40 +105,61 @@ namespace New_Neural_Net
             {
                 Neuron neuron = prevLayer[n];
                 double oldDeltaWeight = neuron.m_outputWeights[m_myIndex].deltaWeight;
+                try
+                {
 
-                double newDeltaWeight =
-                    // Individual input, magnified by the gradient and train rate:
-                    eta
-                    * neuron.m_outputVal
-                    * m_gradient
-                    // Also add momentum = a fraction of the previous delta weight;
-                    + alpha
-                    * oldDeltaWeight;
+                        double newDeltaWeight =
+                            // Individual input, magnified by the gradient and train rate:
+                            -1
+                            * eta
+                            * neuron.m_outputVal
+                            * m_gradient
+                            // Also add momentum = a fraction of the previous delta weight;
+                            + alpha
+                            * oldDeltaWeight;
+                        if (double.IsNaN(newDeltaWeight) || double.IsInfinity(newDeltaWeight)) throw new System.NotFiniteNumberException();
 
-                neuron.m_outputWeights[m_myIndex].deltaWeight = newDeltaWeight;
-                neuron.m_outputWeights[m_myIndex].weight += newDeltaWeight;
+                        neuron.m_outputWeights[m_myIndex].deltaWeight = newDeltaWeight;
+                        neuron.m_outputWeights[m_myIndex].weight += newDeltaWeight;
+                    
+                }
+                catch { MessageBox.Show("Overflow when computing Output Weights"); break; throw; }
+
             }
         }
 
 
-        private static double eta = 0.15;   // [0.0..1.0] overall net training rate
-        private static double alpha = 0.5;// [0.0..n] multiplier of last weight change (momentum)
-        private static double transferFunction(double x) { return Math.Tanh(x); /* tanh - output range [-1.0..1.0] */}
-        private static double transferFunctionDerivative(double x) { return 1.0 - x * x; /* tanh derivative */ }
-        private Random rnd = new Random();
+       
+        private static double transferFunction(double x)
+        {
+            //return Math.Log(1+Math.Exp(x)); /* soft plus baby */
+            //return Math.Tanh(x);
+
+            return x;
+        }
+        private static double transferFunctionDerivative(double x)
+        {
+            //return 1/(1+Math.Exp(-x)); /* softplus derivative */
+            return 1;
+            //return 1.0 - x * x;
+        }
         private double sumDOW(Layer nextLayer)
         { 
             double sum = 0.0;
             // Sum our contributions of the errors at the nodes we feed.
 
             for (int n = 0; n<nextLayer.Count - 1; ++n) {
-                sum += m_outputWeights[n].weight* nextLayer[n].m_gradient;
+                    sum += m_outputWeights[n].weight* nextLayer[n].m_gradient;
             }
 
             return sum;
         }
+
         public double m_outputVal { get; set; }
         public List<Connection> m_outputWeights { get; set; }
+
+        private static double eta = 0.00005;   // [0.0..1.0] overall net training rate
+        private static double alpha = .5;// [0.0..n] multiplier of last weight change (momentum)
         private int m_myIndex;
         private double m_gradient;
     }

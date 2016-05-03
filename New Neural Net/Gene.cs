@@ -7,7 +7,8 @@ using System.Windows.Forms;
 
 namespace New_Neural_Net
 {
-    class Gene
+    /*
+      class Gene
     {
 
         //Constructors
@@ -21,15 +22,13 @@ namespace New_Neural_Net
                 g_numweights += topology[i];
             }
         }
-        public Gene(List<int> topology)
+        public Gene(List<int> topology, Random rnd)
         {
             //MessageBox.Show("Gene being Made");
-            Random rnd = new Random();
             g_weights = new List<List<List<double>>>();
             g_topology = topology;
             g_numweights = 0;
 
-            double debugrand = 1;
             for (int layer = 0; layer < g_topology.Count; ++layer)
             {
                 //MessageBox.Show("First loop");
@@ -43,9 +42,7 @@ namespace New_Neural_Net
                         //MessageBox.Show("Inside the if");
                         for (int connection = 0; connection < g_topology[layer + 1]; ++connection)
                         {
-                            
-                            debugrand = rnd.NextDouble();
-                            tmpneuron.Add(debugrand);
+                            tmpneuron.Add(rnd.NextDouble());
                             g_numweights++;
                             //MessageBox.Show("Adding actual neuron connection: " + debugrand);
                         }
@@ -126,4 +123,5 @@ namespace New_Neural_Net
         private List<int> g_topology;
         private int g_numweights;
     };
+*/
 }
