@@ -9,7 +9,7 @@ using System.Windows.Forms;
 namespace New_Neural_Net
 {
     using Layer = List<Neuron>;
-    class Net
+    class Net : IComparable
     {
         public Net(List<int> topology)
         {
@@ -37,43 +37,6 @@ namespace New_Neural_Net
             }
             // cout << "Net Initializer Completed" << endl;
         }
-
-
-        /*
-        public Net(List<int> topology, Gene inputGene)
-        {
-            m_layers = new List<Layer>();
-            //cout << "Started topo + gene Net Constructor" << endl;
-            int numLayers = topology.Count;
-            //cout << "Number of Layers from topo: " << numLayers << endl;
-            //cout << "Number of Layers from gene: " << inputGene.getWeights().size() << endl;
-            for (int layerNum = 0; layerNum < numLayers; ++layerNum)
-            {
-                m_layers.Add(new Layer());
-                //cout << "pushed on layer: " << layerNum << endl;
-                //cout << "Number of neurons in layer from topo: " << topology[layerNum] << endl;
-                //cout << "Number of neurons in layer from gene: " << inputGene.getWeights()[layerNum].size() << endl;
-                int numOutputs = layerNum == topology.Count - 1 ? 0 : topology[layerNum + 1];
-                // We have a new layer, now fill it with neurons, and
-                // add a bias neuron in each layer.
-                //cout << "number of outputs for layer calculated as: " << numOutputs << endl;
-
-                for (int neuronNum = 0; neuronNum < topology[layerNum]; ++neuronNum)
-                {
-                    //cout << "number of outputs coming from gene: " << inputGene.getWeights()[layerNum][neuronNum].size() << endl;
-
-                    m_layers.Last().Add(new Neuron(numOutputs, neuronNum, inputGene.getWeights()[layerNum][neuronNum]));
-                    // for debugging: cout << "Made a Neuron!" << endl;
-                }
-                // add a bias node outside the loop... fml while debugging
-                // shorthand, toplogy[layerNum] gives real value for number of nodes. Array indexes from 0 to topology[layerNum]-1. Therefore topology[layerNum] is the extra bias node.
-                m_layers.Last().Add(new Neuron(numOutputs, topology[layerNum]));
-                // Force the bias node's output to 1.0 (it was the last neuron pushed in this layer):
-                m_layers.Last().Last().m_outputVal = 1.0;
-                //reset error to zero
-            }
-        }
-        */
         public Net(List<int> topology, Random rnd)
         {
             _layers = new List<Layer>(topology.Count);
@@ -92,6 +55,88 @@ namespace New_Neural_Net
 
                 // Force the bias node's output to 1.0 (it was the last neuron pushed in this layer):
                 _layers.Last().Last().m_outputVal = 1.0;
+            }
+        }
+        public Net(List<Layer> inputNet)
+        {
+            _layers = inputNet;
+        }
+
+        public Net clone()
+        {
+           // MessageBox.Show("clone started");
+            List<Layer> tmpNet = new List<Layer>();
+            foreach(Layer inputLayer in _layers)
+            {
+                //MessageBox.Show("clone layer loop started");
+                Layer tmpLayer = new Layer();
+                foreach(Neuron tmpNeuron in inputLayer)
+                {
+                   // MessageBox.Show("clone neuron loop started");
+                    tmpLayer.Add(tmpNeuron.clone());
+                }
+                tmpNet.Add(tmpLayer);
+                tmpNet.Last().Last().m_outputVal = 1.0;
+            }
+            return new Net(tmpNet);
+        }
+        public List<Net> procreate()
+        {
+            List<Net> resultNets = new List<Net>();
+            resultNets.Add(this.clone());
+            //try killing a neuron
+            double lowOutput = double.PositiveInfinity;
+            int tmplay = -1;
+            int tmpneu = -1;
+
+            // loops to find lowest ouput value
+            // layers start at 1 (can't kill input neurons)
+            for (int l=1; l<_layers.Count; ++l)
+            {
+                // stop before bias neuron (count - 1)
+                for (int n=0; n <_layers[l].Count-1; ++n)
+                {
+                    
+                    double tmp = Math.Abs(_layers[l][n].m_outputVal);
+                    if (tmp < lowOutput)
+                    {
+                        lowOutput = tmp;
+                        tmplay = l;
+                        tmpneu = n;
+                    }
+                }
+            }
+            resultNets[0].destroy(tmplay, tmpneu);
+
+            // mutate based on current error size
+            resultNets.Add(this.clone());
+            resultNets.Last().mutateGenes(_recentAverageError);
+
+            // thats all she wrote
+            return resultNets;
+        }
+        private void destroy (int layer, int neuron)
+        {
+            if (layer < 0 || neuron < 0) return;
+            else
+            {
+                //destroy the neuron
+                this._layers[layer].RemoveAt(neuron);
+                //reindex the holding layer
+                for (int i = neuron; i<_layers[layer].Count; ++i)
+                {
+                    _layers[layer][i].m_myIndex = i;
+
+                }
+                //repoint previous neurons
+                //First check if it's a bias neuron (otherwise there are no weights pointing there already)
+                if (neuron != _layers[layer].Count)
+                {
+                    for (int i = 0; i < _layers[layer - 1].Count; ++i)
+                    {
+                        _layers[layer - 1][i].m_outputWeights.RemoveAt(neuron);
+                    }
+                }
             }
         }
 
@@ -116,10 +161,10 @@ namespace New_Neural_Net
                         _layers[layerNum][n].feedForward(prevLayer);
                     }
                 }
+                computeResults();
             }
             catch { MessageBox.Show("Feed Forward Failed"); throw; }
         }
-
 	    public void backProp(List<double> targetVals)
         {
             // Calculate overall net error (RMS of output neuron errors)
@@ -175,7 +220,8 @@ namespace New_Neural_Net
                 }
             }
         }
-	    public void getResults(List<double> resultVals)
+	    /*
+        public void getResults(List<double> resultVals)
         {
             resultVals.Clear();
 
@@ -184,15 +230,15 @@ namespace New_Neural_Net
                 resultVals.Add(_layers.Last()[n].m_outputVal);
             }
         }
-        public List<double> getResults()
+        */
+        private void computeResults()
         {
-            List<double> resultVals = new List<double>();
+            resultVals = new List<double>();
 
             for (int n = 0; n < _layers.Last().Count - 1; ++n)
             {
                 resultVals.Add(_layers.Last()[n].m_outputVal);
             }
-            return resultVals;
         }
         public string printNetValues()
         {
@@ -231,6 +277,10 @@ namespace New_Neural_Net
         }
         public void mutateGenes()
         {
+            mutateGenes(1);
+        }
+        public void mutateGenes(double mutationparameter)
+        {
             Random rnd = new Random();
             if (rnd.NextDouble() < _mutationmix)
             {
@@ -243,7 +293,7 @@ namespace New_Neural_Net
                     {
                         for (int weight=0; weight<_layers[layer][neuron].m_outputWeights.Count - 1; ++weight)
                         {
-                            _layers[layer][neuron].m_outputWeights[weight].weight+= (rnd.NextDouble() - 0.5)*_mutationStrength;
+                            _layers[layer][neuron].m_outputWeights[weight].weight+= (rnd.NextDouble() - 0.5)*_mutationStrength*mutationparameter;
                         }
                     }
                 }
@@ -278,17 +328,26 @@ namespace New_Neural_Net
                 double delta = targetVals[n] - outputLayer[n].m_outputVal;
                 _error += delta * delta;
             }
-            _error /= outputLayer.Count - 1; // get average error squared
             _error = Math.Sqrt(_error); // RMS
         }
         public double getFitness() { return Math.Abs(1 / _error); }
 
+        public int CompareTo(object obj)
+        {
+            Net comparison = obj as Net;
+            double tmp = this.getRecentAverageError() - comparison.getRecentAverageError();
+            if (tmp > 0) return 1;
+            if (tmp < 0) return -1;
+            else return 0;
+        }
+
+        public List <double> resultVals { get; private set; }
         private List<Layer> _layers; // m_layers[layerNum][neuronNum]
         private double _error = 0;
         private double _recentAverageError = 0;
         private readonly double _recentAverageSmoothingFactor = 100.0;
         private readonly double _mutationmix = 1; //the mix of weight changes to full neuron additions
-        private readonly double _mutationStrength = .25; //scale factor for perturbation amounts. Value of 1 corresponds to weight changes of [-0.5,0.5]
+        private readonly double _mutationStrength = 1; //scale factor for perturbation amounts. Value of 1 corresponds to weight changes of [-0.5,0.5]
     };
 
 }

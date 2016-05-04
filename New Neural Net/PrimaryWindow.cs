@@ -45,7 +45,7 @@ namespace New_Neural_Net
             outputTextBox.Clear();
             //hard code network topology
            
-            myPop = new Population(50, this.topology);
+            myPop = new Population(100, this.topology);
 
         }
 
@@ -110,7 +110,7 @@ namespace New_Neural_Net
             outputTextBox.AppendText("Fittest Individual: " + myPop.fittestIndex + "\n");
             outputTextBox.AppendText("Fitness: " + myPop.topFitness + "\n");
             outputTextBox.AppendText("Training Data: " + trainData.ToString() + "\n");
-            outputTextBox.AppendText("Actual Output: " + myPop.getFittest().getResults()[0] + "\n");
+            outputTextBox.AppendText("Actual Output: " + myPop.getFittest().resultVals[0] + "\n");
             TreeNode populationnode = new TreeNode("Population");
             myPop.populateTree(populationnode);
             treeView1.Nodes.Clear();
@@ -138,8 +138,8 @@ namespace New_Neural_Net
                         trainData.makeNewTraining();
                         myPop.iterateGeneration(trainData.td_inputs, trainData.td_outputs);
                         primaryProgressBar.Value = (100 * (i + 1) / numiterations);
-                        this.outputTextBox.AppendText("Generation " + i + "\n");
-                        this.outputTextBox.AppendText("Fittest individual is: " + myPop.fittestIndex + " with fitness of: " + myPop.topFitness + "\n");
+                        //this.outputTextBox.AppendText("Generation " + i + "\n");
+                        //this.outputTextBox.AppendText("Fittest individual is: " + myPop.fittestIndex + " with fitness of: " + myPop.topFitness + "\n");
                     }
                     this.outputTextBox.AppendText("Iterations Complete.");
                 }
@@ -168,7 +168,23 @@ namespace New_Neural_Net
         private void cullButton_Click(object sender, EventArgs e)
         {
             myPop.cullGeneration(.5);
-            myPop.addNets(25, topology);
+            int addsize = 100 - myPop.getSize();
+            //myPop.addNets(25, topology);
+            
+            for (int i=0; i<addsize; i++)
+            {
+                //MessageBox.Show("button click loop");
+                myPop.addNets(myPop.getNet(i).clone());
+            }
+        }
+
+        private void procreate_Click(object sender, EventArgs e)
+        {
+            int currentsize = myPop.getSize();
+            for (int i = 0; i < currentsize; ++i)
+            {
+                myPop.addNets(myPop.getNet(i).procreate());
+            }
         }
     }
 

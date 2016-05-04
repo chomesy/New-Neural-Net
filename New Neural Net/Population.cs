@@ -34,6 +34,7 @@ namespace New_Neural_Net
             }
             return output;
         }
+
         public Net getNet(int index) { return thePopulation[index]; }
         public void addNets(int popSize, List<int> topology)
         {
@@ -44,11 +45,19 @@ namespace New_Neural_Net
                 thePopulation.Add(newNet);
             }
         }
+        public void addNets (List<Net> net) { thePopulation.AddRange(net); }
+        public void addNets (Net net) { thePopulation.Add(net); }
+
+        public void asex()
+        {
+
+        }
+
         public Net getFittest() { return thePopulation[fittestIndex]; }
         public void sortPopulation()
         {
-            thePopulation.Sort(CompareNets);
-            fittestIndex = 0;
+            thePopulation.Sort();
+            computeFittest();
         }
         public int CompareNets(Net x, Net y)
         {
@@ -57,30 +66,43 @@ namespace New_Neural_Net
             if (tmp < 0) return -1;
             else return 0;
         }
+        public void computeFittest()
+        {
+            topFitness = 0;
+            for (int i = 0; i< thePopulation.Count; ++i)
+            {
+                if (topFitness< thePopulation[i].getFitness())
+                    {
+                    topFitness = thePopulation[i].getFitness();
+                    fittestIndex = i;
+                }
+            }
+        }
         public void iterateGeneration(List <double> inputs, List <double> outputs)
         {
             topFitness = 0;
-            for (int i=0; i<thePopulation.Count; ++i)
+            Parallel.For(0, thePopulation.Count, (index, loopstate) =>
             {
                 try
                 {
-                    thePopulation[i].feedForward(inputs);
-                    thePopulation[i].computeError(outputs);
-                    thePopulation[i].backProp(outputs);
-
-                    if (thePopulation[i].getFitness() > topFitness)
+                    thePopulation[index].feedForward(inputs);
+                    thePopulation[index].computeError(outputs);
+                    thePopulation[index].backProp(outputs);
+                    
+                    if (thePopulation[index].getFitness() > topFitness)
                     {
-                        topFitness = thePopulation[i].getFitness();
-                        fittestIndex = i;
+                        topFitness = thePopulation[index].getFitness();
+                        fittestIndex = index; 
                     }
                     else
                     {
                         //thePopulation[i].mutate();
                     }
-                    thePopulation[i].feedForward(inputs);
+                    thePopulation[index].feedForward(inputs);
+                    thePopulation[index].computeError(outputs);
                 }
-                catch { MessageBox.Show("Iteration Failed"); throw; }
-            }
+                catch { MessageBox.Show("Iteration Failed");  loopstate.Stop(); }
+            });
         }
         public void mutateGeneration()
         {
@@ -91,8 +113,10 @@ namespace New_Neural_Net
         }
         public void cullGeneration(double percentage)
         {
+            thePopulation.Sort();
             int max = (int)Math.Floor(Math.Min(percentage, 1.0) * thePopulation.Count);
             thePopulation.RemoveRange(thePopulation.Count - max, max);
+            computeFittest();
         }
         public int getSize() { return thePopulation.Count; }
         public void populateTree (TreeNode basenode)

@@ -40,19 +40,14 @@ namespace New_Neural_Net
 
             m_myIndex = myIndex;
         }
-        public Neuron(int numOutputs, int myIndex, List<double> outputweights)
+        public Neuron(int myIndex, List<Connection> outputweights)
         {
+           // MessageBox.Show("Entering Neuron Creation");
             m_outputWeights = new List<Connection>();
-            for (int c = 0; c < outputweights.Count && c < numOutputs; ++c)
+            for (int c = 0; c < outputweights.Count; ++c)
             {
                 m_outputWeights.Add(new Connection());
-                m_outputWeights.Last().weight = outputweights[c];
-            }
-            for (int c = outputweights.Count(); c < numOutputs; ++c)
-            {
-                Random rnd = new Random(c);
-                m_outputWeights.Add(new Connection());
-                m_outputWeights.Last().weight = rnd.NextDouble();
+                m_outputWeights.Last().weight = outputweights[c].weight;
             }
 
             m_myIndex = myIndex;
@@ -89,13 +84,11 @@ namespace New_Neural_Net
             double delta = m_outputVal - targetVal;
             m_gradient = delta * transferFunctionDerivative(m_outputVal);
         }
-
         public void calcHiddenGradients(Layer nextLayer)
         {
             double dow = sumDOW(nextLayer);
             m_gradient = dow * transferFunctionDerivative(m_outputVal);
         }
-
         public void updateInputWeights(Layer prevLayer)
         {
             // The weights to be updated are in the Connection container
@@ -128,7 +121,10 @@ namespace New_Neural_Net
             }
         }
 
-
+        public Neuron clone()
+        {
+            return new Neuron(m_myIndex, m_outputWeights);
+        }
        
         private static double transferFunction(double x)
         {
@@ -160,7 +156,7 @@ namespace New_Neural_Net
 
         private static double eta = 0.000005;   // [0.0..1.0] overall net training rate
         private static double alpha = .5;// [0.0..n] multiplier of last weight change (momentum)
-        private int m_myIndex;
+        public int m_myIndex;
         private double m_gradient;
     }
 }

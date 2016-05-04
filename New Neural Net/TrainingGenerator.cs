@@ -56,12 +56,12 @@ namespace New_Neural_Net
         }
 
         private const int _inputmin = 0;
-        private const int _inputmax = 10;
+        private const int _inputmax = 40;
 	    public List<double> td_inputs { get; }
         public List<double> td_outputs { get; }
         private double td_algorithm(double n1, double n2)
         {
-            return Math.Abs(n1 - n2);
+            return Math.Abs(n1 + n2);
         }
     }
 }
